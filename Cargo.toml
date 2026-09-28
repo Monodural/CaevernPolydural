@@ -1,0 +1,10 @@
+[package]
+name = "caevern_polydural"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+caevern_sdk = { path = "../CaevernModuleSDK" }
