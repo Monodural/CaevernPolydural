@@ -3,17 +3,26 @@ use rustc_hash::FxHashMap;
 
 use crate::{block::block_damage::get_block_damage_model, chunks::chunk::Chunk, render::create_face::create_face, world::{get_block::get_block_global_or_direct, get_chunk::get_chunk_key, world_data::WorldData}};
 
-pub fn render_chunk(chunk: &Chunk, chunks: &FxHashMap<i64, Chunk>, world_data: &WorldData, chunk_position_x: i64, chunk_position_y: i64, chunk_position_z: i64, camera_position: (f32, f32, f32)) -> (Vec<[f64; 3]>, Vec<[i8; 3]>, Vec<[f32; 3]>, Vec<[f32; 2]>, Vec<[f64; 3]>, Vec<[i8; 3]>, Vec<[f32; 3]>, Vec<[f32; 2]>, Vec<[f64; 3]>, Vec<[i8; 3]>, Vec<[f32; 3]>, Vec<[f32; 2]>, Vec<(usize, f64)>, Vec<(usize, f64)>) {
+pub fn render_chunk(
+    chunk: &Chunk, chunks: &FxHashMap<i64, Chunk>,
+    world_data: &WorldData, chunk_position_x: i64,
+    chunk_position_y: i64, chunk_position_z: i64, camera_position: (f32, f32, f32)
+) -> (
+    Vec<f32>, Vec<[i8; 3]>, Vec<[f32; 3]>, Vec<f32>,
+    Vec<[f64; 3]>, Vec<[i8; 3]>, Vec<[f32; 3]>, Vec<[f32; 2]>,
+    Vec<[f64; 3]>, Vec<[i8; 3]>, Vec<[f32; 3]>, Vec<[f32; 2]>,
+    Vec<(usize, f64)>, Vec<(usize, f64)>
+) {
     game::log("Starting time");
 
     let current_time = game::get_time();
 
     game::log("Rendering chunk");
 
-    let mut vertices: Vec<[f64; 3]> = Vec::new();
+    let mut vertices: Vec<f32> = Vec::new();
     let mut normals: Vec<[i8; 3]> = Vec::new();
     let mut colors: Vec<[f32; 3]> = Vec::new();
-    let mut uvs: Vec<[f32; 2]> = Vec::new();
+    let mut uvs: Vec<f32> = Vec::new();
 
     let mut vertices_transparent: Vec<[f64; 3]> = Vec::new();
     let mut normals_transparent: Vec<[i8; 3]> = Vec::new();
@@ -43,11 +52,8 @@ pub fn render_chunk(chunk: &Chunk, chunks: &FxHashMap<i64, Chunk>, world_data: &
     let atlas_size = world_data.texture_atlas_size as f32;
 
     for x in 0..16 {
-        game::log(&format!("Rendering chunk x={}", x));
         for z in 0..16 {
-            game::log(&format!("Rendering chunk z={}", z));
             for y in 0..16 {
-                game::log(&format!("Rendering chunk y={}", y));
                 let block = chunk.get_block(x, y, z);
                 if block.is_air() { continue; }
 
@@ -58,13 +64,13 @@ pub fn render_chunk(chunk: &Chunk, chunks: &FxHashMap<i64, Chunk>, world_data: &
                 let mut render_all_block_faces = false;
 
                 let mut block_model = block.properties().get_model();
-                if block_model == "default".to_string() {
+                /*if block_model == "default".to_string() {
                     let block_damage = chunk.get_block_damage(x, y, z);
                     if block_damage > 0 {
                         render_all_block_faces = true;
                     }
                     block_model = get_block_damage_model(block, block_damage);
-                }
+                }*/
 
                 let mut directions = vec![
                     false, false, false, false, false, false,
@@ -140,18 +146,6 @@ pub fn render_chunk(chunk: &Chunk, chunks: &FxHashMap<i64, Chunk>, world_data: &
                     if block_21.0.properties().has_ambient_occlusion() && block_21.2 == 0 { // left back top (21)
                         directions[21] = true;
                     }
-                    /*if get_block_global_or_direct(x as i8 + 1, y as i8, z as i8 + 1, &neighboring_chunks, chunk).properties().has_ambient_occlusion() { // right front (14)
-                        directions[14] = true;
-                    }
-                    if get_block_global_or_direct(x as i8 + 1, y as i8, z as i8 - 1, &neighboring_chunks, chunk).properties().has_ambient_occlusion() { // right back (15)
-                        directions[15] = true;
-                    }
-                    if get_block_global_or_direct(x as i8 - 1, y as i8, z as i8 + 1, &neighboring_chunks, chunk).properties().has_ambient_occlusion() { // left front (16)
-                        directions[16] = true;
-                    }
-                    if get_block_global_or_direct(x as i8 - 1, y as i8, z as i8 - 1, &neighboring_chunks, chunk).properties().has_ambient_occlusion() { // left back (17)
-                        directions[17] = true;
-                    }*/
                 }
                 if !directions[1] || !directions[3] {
                     let block_9 = get_block_global_or_direct(x as i8 - 1, y as i8 - 1, z as i8, &neighboring_chunks, chunk);
@@ -172,20 +166,20 @@ pub fn render_chunk(chunk: &Chunk, chunks: &FxHashMap<i64, Chunk>, world_data: &
                     }
                 }
 
-                let mut block_position_x = x as f64;
-                let block_position_y = y as f64;
-                let mut block_position_z = z as f64;
+                let mut block_position_x = x as f32;
+                let block_position_y = y as f32;
+                let mut block_position_z = z as f32;
 
-                let block_offset = block.properties().get_offset() as f64;
+                let block_offset = block.properties().get_offset() as f32;
 
                 if block_offset > 0.0 {
-                    block_position_x += (x as f64 * 10.0 + z as f64 + y as f64 * 10.0).cos() * block_offset;
-                    block_position_z += (x as f64 + z as f64 * 10.0 + y as f64).sin() * block_offset;
+                    block_position_x += (x as f32 * 10.0 + z as f32 + y as f32 * 10.0).cos() * block_offset;
+                    block_position_z += (x as f32 + z as f32 * 10.0 + y as f32).sin() * block_offset;
                 }
 
-                let block_position_globalized_x = block_position_x * 2.0 + chunk_position_x as f64 * 32.0;
-                let block_position_globalized_y = block_position_y * 2.0 + chunk_position_y as f64 * 32.0;
-                let block_position_globalized_z = block_position_z * 2.0 + chunk_position_z as f64 * 32.0;
+                let block_position_globalized_x = block_position_x * 2.0 + chunk_position_x as f32 * 32.0;
+                let block_position_globalized_y = block_position_y * 2.0 + chunk_position_y as f32 * 32.0;
+                let block_position_globalized_z = block_position_z * 2.0 + chunk_position_z as f32 * 32.0;
 
                 let elements = world_data.shapes.get(&block_model).unwrap();
                 for element in elements {
@@ -197,13 +191,13 @@ pub fn render_chunk(chunk: &Chunk, chunks: &FxHashMap<i64, Chunk>, world_data: &
                     if !directions[0] || !directions[1] || !directions[2] ||
                         !directions[3] || !directions[4] || !directions[5] {
 
-                        let vertices_to_devided_x = 2.0 - vertices_to[0] / 8.0;
-                        let vertices_to_devided_y = 2.0 - vertices_to[1] / 8.0;
-                        let vertices_to_devided_z = 2.0 - vertices_to[2] / 8.0;
+                        let vertices_to_devided_x = 2.0 - vertices_to[0] as f32 / 8.0;
+                        let vertices_to_devided_y = 2.0 - vertices_to[1] as f32 / 8.0;
+                        let vertices_to_devided_z = 2.0 - vertices_to[2] as f32 / 8.0;
 
-                        let vertices_from_devided_x = vertices_from[0] / 8.0;
-                        let vertices_from_devided_y = vertices_from[1] / 8.0;
-                        let vertices_from_devided_z = vertices_from[2] / 8.0;
+                        let vertices_from_devided_x = vertices_from[0] as f32 / 8.0;
+                        let vertices_from_devided_y = vertices_from[1] as f32 / 8.0;
+                        let vertices_from_devided_z = vertices_from[2] as f32 / 8.0;
 
                         cube_vertices.push([ (1.0 - vertices_to_devided_x) + block_position_globalized_x,   (-1.0 + vertices_from_devided_y) + block_position_globalized_y,  (1.0 - vertices_to_devided_z) + block_position_globalized_z]);
                         cube_vertices.push([ (1.0 - vertices_to_devided_x) + block_position_globalized_x,   (-1.0 + vertices_from_devided_y) + block_position_globalized_y, (-1.0 + vertices_from_devided_z) + block_position_globalized_z]);
@@ -215,7 +209,7 @@ pub fn render_chunk(chunk: &Chunk, chunks: &FxHashMap<i64, Chunk>, world_data: &
                         cube_vertices.push([(-1.0 + vertices_from_devided_x) + block_position_globalized_x,  (1.0 - vertices_to_devided_y) + block_position_globalized_y,    (1.0 - vertices_to_devided_z) + block_position_globalized_z]);
                     }
 
-                    /*if !block.properties().is_transparent() {
+                    if !block.properties().is_transparent() {
                         if !directions[0] {
                             let uv_x = (block.properties().get_atlas_position(0) as f32 % atlas_size).floor();
                             let uv_y = (block.properties().get_atlas_position(0) as f32 / atlas_size).floor();
@@ -393,7 +387,7 @@ pub fn render_chunk(chunk: &Chunk, chunks: &FxHashMap<i64, Chunk>, world_data: &
                             }
                             colors.push(light_level_full);
                         }
-                    } else if block.properties().is_wind_affected() {
+                    }/* else if block.properties().is_wind_affected() {
                         if !directions[0] && vertices_from[1] != vertices_to[1] && vertices_from[2] != vertices_to[2] {
                             vertex_index_windy.push((vertices_windy.len(), (
                                 (block_position_x * 2.0 + chunk_position_x as f64 * 32.0 + 1.0 - camera_position.0 as f64).powi(2) +
